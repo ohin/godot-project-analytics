@@ -159,6 +159,7 @@ func _notification(what):
 
 
 class SettingsManager:
+	const DATA_FILE = "user://project_analytics.json"
 	var plugin;
 	
 	func _init(plugin):
@@ -168,21 +169,21 @@ class SettingsManager:
 	func load_data():
 		var loadfile = File.new();
 		if (self.save_exists()):
-			loadfile.open("res://addons/godot-project-analytics.funabab/data.json", File.READ);
+			loadfile.open(DATA_FILE, File.READ);
 			plugin.settings = parse_json(loadfile.get_as_text());
 			loadfile.close();
 		pass
 
 	func save_exists():
 		var file = File.new();
-		var value = file.file_exists("res://addons/godot-project-analytics.funabab/data.json");
+		var value = file.file_exists(DATA_FILE);
 		file.close();
 		return value;
 		pass
 
 	func save_data():
 		var savefile = File.new();
-		savefile.open("res://addons/godot-project-analytics.funabab/data.json", savefile.WRITE);
+		savefile.open(DATA_FILE, savefile.WRITE);
 		savefile.store_string(to_json(plugin.settings));
 		savefile.close();
 		pass
