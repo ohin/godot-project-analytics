@@ -121,8 +121,8 @@ func _set_timer_running(run:bool):
 
 
 func _toggle_timer():
-	_set_timer_running(!settings.timer_active)
-	settings.timer_active = !settings.timer_active;
+	settings.timer_active = !settings.timer_active
+	_set_timer_running(settings.timer_active)
 	
 
 func _exit_tree():
