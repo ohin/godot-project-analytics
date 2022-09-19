@@ -19,6 +19,7 @@ var settings = {
 
 var time_manager
 var settings_manager;
+var user_active = true
 
 const TOOLBAR_BTN_TITLE = "Project Analytics";
 const ANALYSIS_LOADING_DIALOG = "analysis_alert";
@@ -37,17 +38,16 @@ func _enter_tree():
 	editor_tool_button = add_control_to_bottom_panel(tool_button_control, TOOLBAR_BTN_TITLE);
 	if (!settings_manager.save_exists()):
 		settings.project_duration = OS.get_unix_time() - (OS.get_ticks_msec() / 1000);
-		pass
-	_toggle_timer(!settings.timer_active);
+	
+	_set_timer_running(settings.timer_active);
 	set_process(true);
-	pass
+
 
 func _process(delta):
-	if (settings.timer_active):
+	if settings.timer_active && user_active:
 		time_manager.update_timestamp();
-		pass
 	tool_button.set_text("Total time spent: " + time_manager.parse_hour_time_from_secs());
-	pass
+
 
 func _on_analytic_btn_pressed():
 #	if (settings.project_analysis.empty()):
@@ -55,7 +55,7 @@ func _on_analytic_btn_pressed():
 #	else:
 #		_start_file_scanning();
 	_start_file_scanning();
-	pass
+
 
 func _start_file_scanning():
 	_toogle_analytic_loading_dialog();
@@ -108,21 +108,22 @@ func _load_analysis_dialog():
 	analysis_dialog.popup_centered()
 	pass
 
-func _toggle_timer(value = null):
-	var is_active = value;
-	if (is_active == null):
-		is_active = settings.timer_active;
-	if (is_active):
-		time_manager.update_timestamp();
-		tool_button.icon = play_icon
-		editor_tool_button.set_text("Timer: Not Running");
-	else:
+
+func _set_timer_running(run:bool):
+	if run:
 		time_manager.reset_prev_time();
 		tool_button.icon = pause_icon
 		editor_tool_button.set_text(TOOLBAR_BTN_TITLE);
-	if (value == null):
-		settings.timer_active = !settings.timer_active;
-	pass
+	else:
+		time_manager.update_timestamp();
+		tool_button.icon = play_icon
+		editor_tool_button.set_text("Timer: Not Running");
+
+
+func _toggle_timer():
+	_set_timer_running(!settings.timer_active)
+	settings.timer_active = !settings.timer_active;
+	
 
 func _exit_tree():
 	if (settings.timer_active):
@@ -132,6 +133,30 @@ func _exit_tree():
 	get_editor_interface().get_base_control().get_node("analysis_dialog").queue_free();
 	remove_control_from_bottom_panel(tool_button_control);
 	tool_button_control.queue_free()
+
+
+func on_focused():
+	user_active = true
+	if settings.timer_active:
+		_set_timer_running(true)
+
+
+func on_unfocused():
+	if get_editor_interface().is_playing_scene():
+		return
+	user_active = false
+	if not settings.timer_active:
+		return
+	_set_timer_running(false)
+
+
+func _notification(what):
+	match what:
+		NOTIFICATION_WM_FOCUS_IN:
+			on_focused()
+		NOTIFICATION_WM_FOCUS_OUT:
+			on_unfocused()
+
 
 class SettingsManager:
 	var plugin;
